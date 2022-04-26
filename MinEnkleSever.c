@@ -7,5 +7,5 @@ void main(int argc, char* argv[]){
         exit(1);
     }
 
-    run_server(serv, default_handler);
+    run_server(serv, http_get_handler);
 }
