@@ -28,6 +28,13 @@ Server* init_server(int port){
         perror("Failed to change socket options");
     }
 
+    // Change option to enable reusing addresses
+    int flag = 1;
+    if(setsockopt(server->socket, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag)) == -1){
+        perror("Failed to set socket reuse address");
+        return NULL;
+    }
+
     // Setup the server's address
     memset(&server->address, 0, sizeof(server->address));
     server->address.sin6_family = server->domain;
@@ -51,29 +58,8 @@ Server* init_server(int port){
     return server;
 }
 
-void run_server(Server* server){
-    // Temporary default handler
-
-    const int RCV_SIZE = (4096 * 1024);
-
-    char rcv[RCV_SIZE];
-    int addrlen = sizeof(server->address);
-    while(1){
-        printf("Waiting for connection on port %i\n", server->port);
-
-        fflush(stdout);
-
-        int client = accept(server->socket, (struct sockaddr *) &server->address, (socklen_t*)addrlen);
-
-        memset(rcv, 0, RCV_SIZE);
-        size_t nBytes = read(client, rcv, RCV_SIZE);
-        if(nBytes < 0 ){
-            perror("Error reading client");
-            close(client);
-        }
-
-        printf("Received : %s\n", rcv);
-    }
+void run_server(Server* server, Handler handler){
+    handler(server);
 }
 
 void destroy_server(Server* server){

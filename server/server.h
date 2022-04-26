@@ -2,8 +2,9 @@
 #define SERVER_H
 
 #include <sys/socket.h>
-#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #define DEFAULT_BACKLOG 10
 
@@ -17,9 +18,11 @@ typedef struct {
     int socket;
 } Server;
 
+typedef void (*Handler)(Server*);
+
 Server* init_server(int port);
 void destroy_server(Server* server);
 
-void run_server(Server* server);
+void run_server(Server* server, Handler handler);
 
 #endif
