@@ -22,6 +22,8 @@ Request* parse_request(char* buffer, size_t nbytes){
     req->requested = calloc(MAX_FILE_PATH_SIZE , sizeof(char));
     memcpy(req->requested, requested, MAX_FILE_PATH_SIZE);
 
+    
+
     char* httpv = strsep(&buffer, " \r\n");
     if(strcmp(httpv, "HTTP/1.1") == 0){
         req->httpv = HTTP11;
