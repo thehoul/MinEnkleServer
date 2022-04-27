@@ -2,6 +2,7 @@
 #define CARD_H
 
 #include <stdint.h>
+#include <stdlib.h>
 
 #define FULL_DECK_SIZE (13 * 4)
 

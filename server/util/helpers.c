@@ -7,6 +7,29 @@
 #include <stdio.h>
 #include <magic.h>
 
+size_t send_OK(enum HTTPv httpv, int dest){
+    unsigned char msg[] = "HTTP/1.1 200 OK\n";
+    write(dest, msg, strlen(msg));
+    return strlen(msg);
+}
+
+size_t send_response(enum HTTPv httpv, char* content_type, size_t file_size, char* body, int dest){
+    unsigned char msg[MAX_MSG];
+    memset(msg, 0, MAX_MSG);
+    switch(httpv){
+        case HTTP11:
+            snprintf(msg, MAX_MSG, 
+                "HTTP/1.1 200 OK\n"
+                "Content-Type: %s\n"
+                "Content-Length: %li\n\n%s\n", content_type, file_size, body);
+            break;
+        default:    
+            fprintf(stderr, "HTTP version provided is not supported\n");
+            return 0;
+    }
+    write(dest, msg, strlen(msg));
+    return strlen(msg);
+}
 
 int send_file(char* file_path, int dest, enum HTTPv httpv, int feedback){
 
@@ -32,8 +55,6 @@ int send_file(char* file_path, int dest, enum HTTPv httpv, int feedback){
         return 0;
     }
     
-
-    
     unsigned char body[MAX_FILE_SIZE];
     memset(body, 0, MAX_FILE_SIZE);
     size_t file_size = fread(body, sizeof(char), MAX_FILE_SIZE, file);
@@ -42,28 +63,12 @@ int send_file(char* file_path, int dest, enum HTTPv httpv, int feedback){
     }
     fclose(file);
 
-    unsigned char msg[MAX_MSG];
-    memset(msg, 0, MAX_MSG);
-    switch(httpv){
-        case HTTP11:
-            snprintf(msg, MAX_MSG, 
-                "HTTP/1.1 200 OK\n"
-                "Content-Type: %s\n"
-                "Content-Length: %li\n\n%s\n", content_type, file_size, body);
-            break;
-        default:    
-            fprintf(stderr, "HTTP version provided is not supported\n");
-            return 0;
-    }
-
-    write(dest, msg, strlen(msg));
+    
+    size_t sent = send_response(httpv, content_type, file_size, body, dest);
 
     if(feedback == 1){
-        printf("Sent file \"%s\" (%li bytes). Bytes sent : %li\n", file_path, file_size, strlen(msg));
-    } else if(feedback == 2){
-        printf("Sent %li bytes : %s\n", strlen(msg), msg);
+        printf("Sent file \"%s\" (%li bytes). Bytes sent : %li\n", file_path, file_size, sent);
     }
-
     
     return file_size;
 }

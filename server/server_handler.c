@@ -1,6 +1,6 @@
 #include "server_handler.h"
 #include "util/helpers.h"
-#include "../cribbage/cribbage.h"
+#include "../cribbage/controller/controller.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -49,7 +49,7 @@ void http_get_handler(Server* server){
         }
 
         if(strstr(req->requested, "cribbage") != NULL){
-            // TODO : call game handler with the request
+            handle_request(req, client);
         } else if(strcmp(req->requested, "/") == 0){
             int sent = send_file("./server/html/index.html", client, req->httpv, 1);
             if(sent == 0){

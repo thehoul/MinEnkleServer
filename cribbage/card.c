@@ -1,7 +1,7 @@
 #include "card.h"
 
 #include <stdio.h>
-#include <stdlib.h>
+#include <string.h>
 
 Card* new_card(uint32_t val, uint32_t suit){
     if(val > 13 || suit > 4){
