@@ -12,6 +12,8 @@ Request* parse_request(char* buffer, size_t nbytes){
     char* type = strsep(&buffer, " \r\n");
     if(strcmp(type, "GET") == 0){
         req->type = GET;
+    } else if(strcmp(type, "POST") == 0){
+        req->type = POST;
     } else {
         fprintf(stderr, "Provided request type cannot be handled. Received \"%s\"\n", type);
         free(req);
@@ -32,6 +34,14 @@ Request* parse_request(char* buffer, size_t nbytes){
         free(req->requested);
         free(req);
         return NULL;
+    }
+
+    // if we have a post, get the content 
+    if(req->type == POST){
+        while(strcmp(strsep(&buffer, " \r\n"), "Content-Length:") != 0);
+        req->content_len = atoi(strsep(&buffer, " \r\n"));
+        req->content = calloc(strlen(buffer), sizeof(char));
+        strcpy(req->content, buffer);
     }
 
     return req;

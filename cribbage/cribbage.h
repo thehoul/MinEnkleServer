@@ -17,5 +17,9 @@ typedef struct {
 } Game;
 
 Game* new_game(uint32_t nb_players);
+void del_game(Game* game);
+
+void print_game(Game* game);
+char* to_string(Game* game);
 
 #endif

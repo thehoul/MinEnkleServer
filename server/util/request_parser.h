@@ -9,13 +9,15 @@ enum HTTPv {
 };
 
 enum ReqType {
-    GET
+    GET, POST
 };
 
 typedef struct {
     enum ReqType type;
     char* requested;
     enum HTTPv httpv;  
+    size_t content_len;
+    char* content;
 } Request;
 
 Request* parse_request(char* buffer, size_t nbytes);

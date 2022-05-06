@@ -1,4 +1,4 @@
-#include "helpers.h"
+#include "server_helpers.h"
 
 #include <sys/stat.h>
 #include <stdlib.h>
@@ -8,7 +8,7 @@
 #include <magic.h>
 
 size_t send_OK(enum HTTPv httpv, int dest){
-    unsigned char msg[] = "HTTP/1.1 200 OK\n";
+    unsigned char msg[] = OK_HTML;
     write(dest, msg, strlen(msg));
     return strlen(msg);
 }

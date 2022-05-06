@@ -3,7 +3,7 @@
 
 #include "server.h"
 #include "util/request_parser.h"
-#include "util/helpers.h"
+#include "util/server_helpers.h"
 
 void echo_handler(Server* server);
 void http_get_handler(Server* server);

@@ -12,6 +12,8 @@
 #define MAX_FILE_PATH 100
 #define CONTENT_TYPE_LEN 50
 
+#define OK_HTML "HTTP/1.1 200 OK\n"
+
 size_t send_response(enum HTTPv httpv, char* content_type, size_t file_size, char* body, int dest);
 int send_file(char* file_path, int dest, enum HTTPv httpv, int feedback);
 size_t send_OK(enum HTTPv httpv, int dest);

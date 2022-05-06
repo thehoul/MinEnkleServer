@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "stdlib.h": "c",
+        "request_parser.h": "c",
+        "server.h": "c",
+        "crib_helpers.h": "c",
+        "server_helpers.h": "c"
+    },
+    "C_Cpp.errorSquiggles": "EnabledIfIncludesResolve"
+}
