@@ -2,6 +2,8 @@
 #include "../cribbage.h"
 #include "../../server/util/server_helpers.h"
 #include "../util/crib_helpers.h"
+#include "../util/cribbage_rules.h"
+#include "../util/errors.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -21,73 +23,74 @@ struct Func{
 };
 
 // Declaring function to be able to use them in the funcs list below
-uint32_t create_game(Request* req, char* body);
+uint32_t start_game(Request* req, char* body);
 uint32_t join_game(Request* req, char* body);
 uint32_t get_game(Request* req, char* body);
 uint32_t discard_card(Request* req, char* body);
 uint32_t use_card(Request* req, char* body);
+uint32_t delete_game(Request* req, char* body);
 
 struct Func funcs[] = {
-    {"createGame", GET, create_game},
+    {"startGame", GET, start_game},
     {"joinGame", GET, join_game},
     {"getGame", GET, get_game},
     {"discardCard", POST, discard_card},
     {"useCard", POST, use_card},
+    {"deleteGame", POST, delete_game}
 };
 
-size_t nb_func = 5;
+size_t nb_func = 6;
 
 Game* game = NULL;
-uint32_t nb_players = 0;
-uint32_t* players;
 
-void check_state(){
-    switch(game->phase){
-        case CHOOSING:
-            if(game->board->crib_size == 4){
-                game->phase = ROUND;
-            }
-            break;
-        case ROUND:
-            break;
-        case COUNT:
-            break;
-        default:
-            break;
+uint32_t start_game(Request* req, char* body){
+    if(check_nb_players(game->nb_players)){
+        print_err(INVALID_ARGUMENT, "Invalid number of players");
+        return write_error(INVALID_ARGUMENT, "Invalid number of players", body);
+    } else {
+        if(game == NULL){
+            print_err(ILLEGAL_PHASE, "Game has not been created yet");
+            return write_error(ILLEGAL_PHASE, "Game has not been created yet", body);
+        }
+        int err = deal_game(game);
+        sprintf(body, "%i", NO_ERROR);
+        return strlen(body);
     }
 }
 
-uint32_t create_game(Request* req, char* body){
-    if(nb_players < 2 || nb_players > 4){
-        sprintf(body, "0");
-        return strlen(body);
-    }
-    if(game != NULL){
+uint32_t delete_game(Request* req, char* body){
+    if(game != NULL) {
         del_game(game);
+        free(game);
+        game = NULL;
     }
-    game = new_game(players, nb_players);
-    sprintf(body, "1");
+
+    sprintf(body, "%i", NO_ERROR);
     return strlen(body);
 }
 
 uint32_t get_game(Request* req, char* body){
     // Takes care of state transition before sending the game 
-    check_state();
+    update_game(game);
 
     if(game != NULL){
         char* game_str = to_string(game);
-        snprintf(body, MAX_RESPONSE, "%s", game_str);
+        snprintf(body, MAX_RESPONSE, "%i\n%s", NO_ERROR, game_str);
         return strlen(body);
     } else {
-        sprintf(body, "Game not yet created, call createGame first");
+        sprintf(body, "%i Game not yet created, call createGame first", INVALID_ARGUMENT);
         return strlen(body);
     }
 }
 
 uint32_t join_game(Request* req, char* body){
-    players = realloc(players, sizeof(int) * (nb_players+1));
-    players[nb_players] = nb_players+1;
-    sprintf(body, "%i", ++nb_players);
+    if(game == NULL){
+        game = calloc(1, sizeof(Game));
+        init_game(game);
+    }
+    uint32_t player_id = game->nb_players+1;
+    add_player(game, player_id);
+    sprintf(body, "%i %i", NO_ERROR, player_id);
     return strlen(body);
 }
 
@@ -97,7 +100,7 @@ int parse_post_req(Request* req, Crib_post_req* post){
     while(player == 0){
         char* tok = strsep(&req->content, " \r\n");
         if(tok == NULL){
-            return -1;
+            return PARSING_ERROR;
         }
         player = atoi(tok);
     }
@@ -110,58 +113,63 @@ int parse_post_req(Request* req, Crib_post_req* post){
         char* card_str = strsep(&req->content, " ");
         if(sscanf(card_str, "(%i,%i)", &post->cards[i].suit, &post->cards[i].value) != 2){
             free(post->cards);
-            return -1;
+            return PARSING_ERROR;
         }
     }
 
-    return 0;
+    return NO_ERROR;
+}
+
+void free_post_req(Crib_post_req* req){
+    free(req->cards);
+    req->cards = NULL;
 }
 
 uint32_t discard_card(Request* req, char* body){
     if(game->phase != CHOOSING){
-        sprintf(body, "Can't discard cards in phase %s", int_to_phase(game->phase));
-        return strlen(body);
+        print_err(ILLEGAL_PHASE, "Can't discard cards if not in CHOOSING state");
+        return write_error(ILLEGAL_PHASE, "Can't discard cards if not in CHOOSING state", body);
     }
 
+
+
     Crib_post_req post;
-    parse_post_req(req, &post);
-
-    if(post.player_id < 0){
-        sprintf(body, "Error reading discard POST");
-        return strlen(body);
-    } 
-
-    if(post.nb_cards == 0){
-        sprintf(body, "Can't discard 0 cards");
-        return strlen(body);
+    int err = parse_post_req(req, &post);
+    if(err){
+        print_err(err, "Error parsing crib post request");
+        return write_error(err, "Error parsing crib post request", body);
     }
 
     for(int i = 0; i < post.nb_cards; i++){
-        if(discard_player_card(game->board, post.player_id-1, post.cards[i].suit, post.cards[i].value) < 0){
-            sprintf(body, "Couldn't discard : (%i,%i)\n", post.cards[i].suit, post.cards[i].value);
-            return strlen(body);
+        err = player_discard(game, post.player_id, &post.cards[i]);
+        printf("WOWOWOOW %s \n", error_to_string(err));
+        if(err){
+            print_err(err, "Couldn't discard player's card");
+            return write_error(err, "Couldn't discard player's card", body);
         }
     }
-    sprintf(body, "Card successfully discarded");
-    free(post.cards);
+
+    sprintf(body, "%i Card successfully discarded", NO_ERROR);
+    free_post_req(&post);
     return strlen(body);
 }
 
 uint32_t use_card(Request* req, char* body){
-    printf("USING CARD\n");
     Crib_post_req post;
-    parse_post_req(req, &post);
-    if(post.nb_cards > 1){
-        sprintf(body, "Can't use more than one card at once");
+    int err = parse_post_req(req, &post);
+    if(err){
+        print_err(err, "Couldn't parse post request");
+        return write_error(err, "Couldn't parse pot request", body);
         return strlen(body);
     }
 
-    if(use_card_player(game->board, post.player_id-1, post.cards[0].suit, post.cards[0].value) < 0){
-        sprintf(body, "Couldn't use the given card");
-        return strlen(body);
+    err = player_use(game, post.player_id, &post.cards[0]);
+    if(err){
+        print_err(err, "Using card didn't work");
+        return write_error(err, "Using card didn't work", body);
     }
 
-    sprintf(body, "Card successfully used");
+    sprintf(body, "%i", NO_ERROR);
     return strlen(body);
 }
 

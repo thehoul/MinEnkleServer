@@ -55,10 +55,6 @@ void print_deck(Card* deck, size_t size){
     printf("\n");
 }
 
-int deck_to_string(Card* deck, int nb_cards, char* str){
-    int len = sprintf(str, "%i", nb_cards);
-    for(int i = 0; i < nb_cards; i++){
-        len += sprintf(str+len, " (%i,%i)", deck[i].suit, deck[i].value);
-    }
-    return len;
+int equals(Card* this, Card* that){
+    return this->suit == that->suit && this->value == that->value;
 }
