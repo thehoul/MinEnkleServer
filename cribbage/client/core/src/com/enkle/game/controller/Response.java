@@ -4,12 +4,14 @@ public class Response {
     private final int status;
     private final HTTPv httpv;
     private final String content;
+    private final Error error;
     private final int conent_len;
 
-    public Response(int status, HTTPv httpv, String content, int content_len){
+    public Response(int status, HTTPv httpv, String content, Error error, int content_len){
         this.status = status;
         this.httpv = httpv;
         this.content = content;
+        this.error = error;
         this.conent_len = content_len;
     }
 
@@ -23,6 +25,10 @@ public class Response {
 
     public String getContent() {
         return content;
+    }
+
+    public Error getError() {
+        return error;
     }
 
     public int getConent_len() {

@@ -85,20 +85,30 @@ public class Game {
     }
 
     public static Game fromString(String game_str){
+        int line_offset = 0;
+
+        // Parsing info line
         String[] lines = game_str.split("\n");
         String[] info_str = lines[0].split(" ");
         int nb_players = Integer.parseInt(info_str[0]);
+
+        // Parsing list of players_id
         List<Integer> players = new ArrayList<>(nb_players);
         for(int i = 0; i < nb_players; i++){
             players.add(Integer.parseInt(info_str[i + 1]));
         }
         int dealer = Integer.parseInt(info_str[1 + nb_players]);
         Game game = new Game(players, dealer);
+        line_offset++;
+
+        // Parsing phase
+        int phase = Integer.parseInt(lines[1]);
+        line_offset++;
 
         // Getting each player's hands and used cards
 
         for(int i = 0; i < nb_players; i++){
-            String[] player_str = lines[2*i + 1].split(" ");
+            String[] player_str = lines[2*i + line_offset].split(" ");
             int player_id = Integer.parseInt(player_str[0]);
 
             // Parsing player's cards
@@ -111,31 +121,33 @@ public class Game {
 
             // Parsing player's used cards
             Deck used = new Deck();
-            String[] used_str = lines[2*i + 2].split(" ");
+            String[] used_str = lines[2*i + line_offset + 1].split(" ");
             int nb_used = Integer.parseInt(used_str[0]);
             for(int j = 0; j < nb_used; j++){
                 used.addCard(parseCard(used_str[j+1]));
             }
             game.setPlayers_used(player_id, used);
         }
+        line_offset += 2 * nb_players;
 
-        System.out.println("NB PLAYERS : " + nb_players);
         // Parsing the crib cards
-        String[] crib_str = lines[1 + nb_players * 2].split(" ");
+        String[] crib_str = lines[line_offset].split(" ");
         int crib_size = Integer.parseInt(crib_str[0]);
         for(int i = 0; i < crib_size; i++){
             game.addCribCard(parseCard(crib_str[i+1]));
         }
+        line_offset++;
 
         // Parsing middle cards
-        String[] middle_str = lines[2 + nb_players * 2].split(" ");
+        String[] middle_str = lines[line_offset].split(" ");
         int nb_middle = Integer.parseInt(middle_str[0]);
         for(int i = 0; i < nb_middle; i++){
             game.addMiddleCard(parseCard(middle_str[i+1]));
         }
+        line_offset++;
 
         // Parsing deck
-        String[] deck_str = lines[3 + nb_players * 2].split(" ");
+        String[] deck_str = lines[line_offset].split(" ");
         int deck_size = Integer.parseInt(deck_str[0]);
         for(int i = 0; i < deck_size; i++){
             game.addDeckCard(parseCard(deck_str[i+1]));

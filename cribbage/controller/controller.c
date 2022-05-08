@@ -90,7 +90,7 @@ uint32_t join_game(Request* req, char* body){
     }
     uint32_t player_id = game->nb_players+1;
     add_player(game, player_id);
-    sprintf(body, "%i %i", NO_ERROR, player_id);
+    sprintf(body, "%i\n%i", NO_ERROR, player_id);
     return strlen(body);
 }
 
@@ -142,7 +142,6 @@ uint32_t discard_card(Request* req, char* body){
 
     for(int i = 0; i < post.nb_cards; i++){
         err = player_discard(game, post.player_id, &post.cards[i]);
-        printf("WOWOWOOW %s \n", error_to_string(err));
         if(err){
             print_err(err, "Couldn't discard player's card");
             return write_error(err, "Couldn't discard player's card", body);
