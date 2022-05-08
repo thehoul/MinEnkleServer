@@ -12,11 +12,12 @@ enum PHASE {
 typedef struct {
     enum PHASE phase;
     int nb_players;
-    int* players;
+    uint32_t* players;
+    uint32_t dealer;
     Board* board;
 } Game;
 
-Game* new_game(uint32_t nb_players);
+Game* new_game(uint32_t* players, uint32_t nb_players);
 void del_game(Game* game);
 
 void print_game(Game* game);

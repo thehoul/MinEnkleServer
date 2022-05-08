@@ -10,9 +10,10 @@ public class Parser {
         Response.HTTPv httpv;
         int status;
         int content_len;
-        String content;
+        StringBuilder content;
 
         String data_str = new String(data, StandardCharsets.US_ASCII);
+        System.out.println("Parsing : " + data_str.length());
 
         String[] line = data_str.split("\n");
         String[] split = line[0].split(" ");
@@ -24,9 +25,18 @@ public class Parser {
         status = Integer.parseInt(split[1]);
 
         content_len = Integer.parseInt(line[2].split(" ")[1]);
-        content = line[4];
+        int content_nb_lines = line.length - 3 - 2;
+        content = new StringBuilder();
+        for(int i = 0; i < content_nb_lines; i++){
+            if(i == content_nb_lines-1){
+                content.append(line[4 + i]);
+            } else{
+                content.append(line[4 + i]  + "\n");
+            }
 
-        return new Response(status, httpv, content, content_len);
+        }
+
+        return new Response(status, httpv, content.toString(), content_len);
     }
 
 

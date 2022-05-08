@@ -28,6 +28,7 @@ void deal_cards(Board* board, uint32_t nb_players);
 int discard_player_card(Board* board, int player, int suit, int val);
 int use_card_player(Board* board, int player, int suit, int val);
 
-char* board_to_string(Board* board, int nb_players);
+int board_to_string(Board* board, int nb_players, int* players, char* str);
+
 
 #endif

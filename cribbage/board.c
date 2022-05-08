@@ -1,6 +1,7 @@
 #include "board.h"
 
 #include <stdio.h>
+#include <string.h>
 
 Board* create_board(uint32_t nb_players){
     Board* board = calloc(1, sizeof(Board));
@@ -62,6 +63,13 @@ Card* pop_deck(Board* board){
     return popped;
 }
 
+void add_card_deck(Card** deck, size_t* deck_size, int suit, int val){
+    *deck = realloc(*deck, (*deck_size)+1);
+    (*deck)[*deck_size].suit = suit;
+    (*deck)[*deck_size].value = val;
+    (*deck_size)++;
+}
+
 void deal_cards(Board* board, uint32_t nb_players){
     board->players_cards = calloc(nb_players, sizeof(Card*));
     board->players_nb_cards = calloc(nb_players, sizeof(int));
@@ -80,14 +88,13 @@ void deal_cards(Board* board, uint32_t nb_players){
             board->players_cards[i][j].value = popped->value;
         }
     }
+
+    if(nb_players == 3){
+        Card* extra_crib = pop_deck(board);
+        add_card_deck(&board->crib, &board->crib_size, extra_crib->suit, extra_crib->value);
+    }
 }
 
-void add_card_deck(Card** deck, size_t* deck_size, int suit, int val){
-    *deck = realloc(*deck, (*deck_size)+1);
-    (*deck)[*deck_size].suit = suit;
-    (*deck)[*deck_size].value = val;
-    (*deck_size)++;
-}
 
 int get_card_index(Card* deck, int size, int player, int suit, int val){
     for(int i = 0; i < size; i++){
@@ -133,28 +140,20 @@ int use_card_player(Board* board, int player, int suit, int val){
     return 0;
 }
 
-char* board_to_string(Board* board, int nb_players){
-    char* str = calloc(500, sizeof(char));
-    int len = snprintf(str, 500, "Deck : \n\t %s\n", deck_to_string(board->deck, board->deck_size));
-    if(board->players_cards != NULL){
-        for(int i = 0; i < nb_players; i++){
-            len += sprintf(str+len, "\t Player %i : \tHand: %s\n\t\t\tUsed: %s", i+1,
-                deck_to_string(board->players_cards[i], board->players_nb_cards[i]),
-                deck_to_string(board->players_used_cards[i], board->players_nb_used[i]));
-        }
-    } else {
-        len += sprintf(str+len, "\t Players have not been dealt cards\n");
+int board_to_string(Board* board, int nb_players, int* players, char* str){
+    char* tail = str;
+    for(int i = 0; i < nb_players; i++){
+        tail += sprintf(tail, "%i ", players[i]);
+        tail += deck_to_string(board->players_cards[i], board->players_nb_cards[i], tail);
+        tail += sprintf(tail, "\n");
+        tail += deck_to_string(board->players_used_cards[i], board->players_nb_used[i], tail);
+        tail += sprintf(tail, "\n");    
     }
-    if(board->crib != NULL){
-        len += sprintf(str+len, "\t Crib : %s\n", deck_to_string(board->crib, board->crib_size));
-    } else {
-        len += sprintf(str+len, "\t Crib has bot been drawn yet\n");
-    }
+    tail += deck_to_string(board->crib, board->crib_size, tail);
+    tail += sprintf(tail, "\n");
+    tail += deck_to_string(board->middle, board->middle_count, tail);
+    tail += sprintf(tail, "\n");
+    tail += deck_to_string(board->deck, board->deck_size, tail);
 
-    if(board->middle != NULL){
-        len += sprintf(str+len, "\t Middle : %s\n", deck_to_string(board->middle, board->nb_middle));
-    } else {
-        len += sprintf(str+len, "\t No cards in the middle\n");
-    }
-    return str;
+    return strlen(tail) - strlen(str);
 }

@@ -38,8 +38,8 @@ struct Func funcs[] = {
 size_t nb_func = 5;
 
 Game* game = NULL;
-int nb_players = 0;
-int* players;
+uint32_t nb_players = 0;
+uint32_t* players;
 
 void check_state(){
     switch(game->phase){
@@ -58,11 +58,15 @@ void check_state(){
 }
 
 uint32_t create_game(Request* req, char* body){
+    if(nb_players < 2 || nb_players > 4){
+        sprintf(body, "0");
+        return strlen(body);
+    }
     if(game != NULL){
         del_game(game);
     }
-    game = new_game(nb_players);
-    sprintf(body, "Game created");
+    game = new_game(players, nb_players);
+    sprintf(body, "1");
     return strlen(body);
 }
 
@@ -82,7 +86,7 @@ uint32_t get_game(Request* req, char* body){
 
 uint32_t join_game(Request* req, char* body){
     players = realloc(players, sizeof(int) * (nb_players+1));
-    players[nb_players] = nb_players;
+    players[nb_players] = nb_players+1;
     sprintf(body, "%i", ++nb_players);
     return strlen(body);
 }

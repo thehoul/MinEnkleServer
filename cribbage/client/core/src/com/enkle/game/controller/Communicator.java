@@ -33,7 +33,7 @@ public class Communicator {
             OutputStream out = socket.getOutputStream();
             InputStream in = socket.getInputStream();
             out.write(req.getBytes(StandardCharsets.UTF_8));
-            byte[] data = new byte[100];
+            byte[] data = new byte[500];
             in.read(data);
             Response response = Parser.parseResponse(data);
             if(!socket.isClosed()){

@@ -55,14 +55,10 @@ void print_deck(Card* deck, size_t size){
     printf("\n");
 }
 
-char* deck_to_string(Card* deck, int nb_cards){
-    char* str = calloc(nb_cards * 10 + 16, sizeof(char));
-    int len = 0;
-    len += sprintf(str, "Nb cards : %i | ", nb_cards);
+int deck_to_string(Card* deck, int nb_cards, char* str){
+    int len = sprintf(str, "%i", nb_cards);
     for(int i = 0; i < nb_cards; i++){
-        len += sprintf(str + len, "(%i, %i) ", deck[i].suit, deck[i].value);
-
+        len += sprintf(str+len, " (%i,%i)", deck[i].suit, deck[i].value);
     }
-    sprintf(str+len, "\n");
-    return str;
+    return len;
 }

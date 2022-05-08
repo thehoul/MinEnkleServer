@@ -17,6 +17,7 @@ void del_card(Card* card);
 
 void print_card(Card* card);
 
-char* deck_to_string(Card* deck, int nb_cards);
+
+int deck_to_string(Card* deck, int nb_cards, char* str);
 
 #endif
